@@ -3,7 +3,7 @@ package nextdate
 import (
 	"errors"
 	"fmt"
-	"gofer/package/other"
+	"gofer/package/config"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,7 +25,7 @@ func repeatD(now time.Time, date time.Time, repeatParams []string) (string, erro
 	for date.Before(now) {
 		date = date.AddDate(0, 0, day)
 	}
-	return date.Format(other.TimeFormat), nil
+	return date.Format(config.TimeFormat), nil
 }
 
 func repeatY(now time.Time, date time.Time, repeatParams []string) (string, error) {
@@ -36,7 +36,7 @@ func repeatY(now time.Time, date time.Time, repeatParams []string) (string, erro
 	for date.Before(now) {
 		date = date.AddDate(1, 0, 0)
 	}
-	return date.Format(other.TimeFormat), nil
+	return date.Format(config.TimeFormat), nil
 }
 
 func repeatWM() (string, error) {
@@ -48,7 +48,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return "", fmt.Errorf("правило повтора не указано")
 	}
 
-	date, err := time.Parse(other.TimeFormat, dstart)
+	date, err := time.Parse(config.TimeFormat, dstart)
 	if err != nil {
 		return "", fmt.Errorf("недопустимый формат даты")
 	}
@@ -67,7 +67,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	}
 }
 func NextDayHandler(w http.ResponseWriter, r *http.Request) {
-	now, err := time.Parse(other.TimeFormat, r.FormValue("now"))
+	now, err := time.Parse(config.TimeFormat, r.FormValue("now"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

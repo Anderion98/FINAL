@@ -14,9 +14,9 @@ func DirGetWeb() http.Handler {
 	return http.FileServer(http.Dir(webDir))
 }
 func main() {
-	db.New()
+	db.DataBase()
 	r := chi.NewRouter()
 	r.Handle("/*", DirGetWeb())
 	r.Get("/api/nextdate", nextdate.NextDayHandler)
-	server.Start(r)
+	server.Server(r)
 }

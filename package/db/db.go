@@ -2,8 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-	"gofer/package/other"
+	"gofer/package/config"
 	"os"
 
 	_ "modernc.org/sqlite"
@@ -13,29 +12,28 @@ type Storage struct {
 	db *sql.DB
 }
 
-func New() (*Storage, error) {
+func DataBase() (*Storage, error) {
 	s := &Storage{}
 
 	err := s.Init()
 	if err != nil {
-		fmt.Println(other.DefaultNameDB)
 		return nil, err
 	}
 
 	return s, nil
 }
 func (s *Storage) Init() error {
-	_, err := os.Stat(other.DefaultNameDB)
+	_, err := os.Stat(config.DbName)
 	var install bool
 	if err != nil {
 		install = true
 	}
 	if install {
-		db, err := sql.Open("sqlite", other.DefaultNameDB)
+		db, err := sql.Open("sqlite", config.DbName)
 		if err != nil {
 			return err
 		}
-		_, err = db.Exec(other.Schema)
+		_, err = db.Exec(config.Schema)
 		if err != nil {
 			return err
 		}
