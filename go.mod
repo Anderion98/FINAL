@@ -3,6 +3,7 @@ module final
 go 1.24.2
 
 replace gofer => ./
+
 require gofer v0.0.0
 
 require (
@@ -14,6 +15,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/go-chi/chi v1.5.5
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
