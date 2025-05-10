@@ -13,6 +13,5 @@ func Start() error {
 		log.Fatal("ошибка создания сервера", err)
 		return err
 	}
-	log.Println("Отлючение сервера по порту: ", port)
 	return nil
 }
