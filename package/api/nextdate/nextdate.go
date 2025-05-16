@@ -14,6 +14,7 @@ func afterNow(date, now time.Time) bool {
 	return date.After(now) || now.Equal(date)
 }
 
+// правило для d
 func repeatD(now time.Time, date time.Time, repeatParams []string) (string, error) {
 	if len(repeatParams) != 2 {
 		return "", errors.New("некорректное правило повторения")
@@ -31,6 +32,8 @@ func repeatD(now time.Time, date time.Time, repeatParams []string) (string, erro
 	}
 	return date.Format(TimeFormat), nil
 }
+
+// правило для y
 func repeatY(now time.Time, date time.Time, repeatParams []string) (string, error) {
 	if len(repeatParams) != 1 {
 		return "", errors.New("некорректное правило повторения")
@@ -42,6 +45,7 @@ func repeatY(now time.Time, date time.Time, repeatParams []string) (string, erro
 	return date.Format(TimeFormat), nil
 }
 
+// правило для w и m
 func repeatWM() (string, error) {
 	return "", fmt.Errorf("неподдерживаемый формат")
 }

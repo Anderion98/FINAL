@@ -21,11 +21,12 @@ CREATE INDEX IF NOT EXISTS idx_date ON scheduler(date);
 
 func Init(dbfile string) error {
 	var err error
+	// открываем базу данных, если файла нет, то он будет создан
 	db, err = sql.Open("sqlite", dbfile)
 	if err != nil {
 		return err
 	}
-
+	// следом создаем таблицу и индекс
 	_, err = db.Exec(schema)
 	if err != nil {
 		return err
@@ -34,6 +35,7 @@ func Init(dbfile string) error {
 	return nil
 }
 
+// закрыттие базы данных
 func Close() {
 	db.Close()
 }

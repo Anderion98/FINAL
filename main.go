@@ -26,6 +26,6 @@ func main() {
 	r.Handle("/*", DirGetWeb())
 	r.Get("/api/nextdate", api.NextDayHandler)
 	r.Post("/api/task", api.AddTask)
-	//r.Get("/api/tasks", api.TasksHandler)
+	r.Get("/api/tasks", api.TasksHandler)
 	server.Server(r)
 }

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"gofer/package/api/nextdate"
 	"gofer/package/db"
-	"log"
 	"net/http"
 	"time"
 )
 
 type TasksResp struct {
-	Tasks []*db.Task `json:"tasks"`
+	Tasks []db.Task `json:"tasks"`
 }
 
+// не использовал writeJson ввиду несовпадения типов
 func NextDayHandler(w http.ResponseWriter, r *http.Request) {
 	now, err := time.Parse(nextdate.TimeFormat, r.FormValue("now"))
 	if err != nil {
@@ -51,7 +51,6 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 
 	id, err := db.Add(&t)
 	if err != nil {
-		fmt.Printf("ошибка добавления задачи в базу: %v", err)
 		writeJson(w, map[string]string{"error": "ошибка добавления задачи в базу"})
 		return
 	}
@@ -62,18 +61,34 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	writeJson(w, result)
 }
 
-/*func TasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := db.Tasks(50) // в параметре максимальное количество записей
+func TasksHandler(w http.ResponseWriter, r *http.Request) {
+	tasks, err := db.Tasks(50)
 	if err != nil {
 		writeJson(w, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJson(w, TasksResp{
-		Tasks: tasks,
-	})
-}*/
 
-// afterNow возвращает true, если date >= now (по дате, без времени)
+	if tasks == nil {
+		tasks = make([]*db.Task, 0)
+	}
+
+	// поле ID не совпадает с типом поля в JSON, в ручную меняем тип и преобразуем в мапу
+	respTasks := make([]map[string]string, 0, len(tasks))
+	for _, t := range tasks {
+		taskMap := map[string]string{
+			"id":      fmt.Sprintf("%d", t.ID),
+			"date":    t.Date,
+			"title":   t.Title,
+			"comment": t.Comment,
+			"repeat":  t.Repeat,
+		}
+		respTasks = append(respTasks, taskMap)
+	}
+
+	writeJson(w, map[string]interface{}{"tasks": respTasks})
+}
+
+// afterNow не стал импортировать из nextdate, создал здесь свое
 func afterNow(now, date time.Time) bool {
 	nowRounding := now.In(time.UTC).Truncate(24 * time.Hour)
 	dateRounding := date.In(time.UTC).Truncate(24 * time.Hour)
@@ -94,10 +109,10 @@ func checkDate(t *db.Task) error {
 
 	if !afterNow(now, timeD) {
 		if t.Repeat == "" {
-			// Если правило повторения нет - ставим сегодняшнюю дату
+			// если правила нет ставим текущую дату в нужном формате
 			t.Date = now.Format(nextdate.TimeFormat)
 		} else {
-			// Если правило есть - вычисляем следующую дату
+			// вычисляем следующую дату
 			next, err := nextdate.NextDate(now, t.Date, t.Repeat)
 			if err != nil {
 				return fmt.Errorf("ошибка вычисления следующей даты: %w", err)
@@ -111,7 +126,6 @@ func checkDate(t *db.Task) error {
 func writeJson(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("не удалось сериализовать ответ: %v", err)
-		http.Error(w, "Ошибка сериализации", http.StatusInternalServerError)
+		http.Error(w, "Ошибка writeJson/task/api", http.StatusInternalServerError)
 	}
 }
