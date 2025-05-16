@@ -15,8 +15,7 @@ func DirGetWeb() http.Handler {
 	return http.FileServer(http.Dir(webDir))
 }
 func main() {
-	dbfile := "scheduler.db"
-	if err := db.Init(dbfile); err != nil {
+	if err := db.Init("scheduler.db"); err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
@@ -32,5 +31,5 @@ func main() {
 	r.Post("/api/task/done", api.DoneTask)
 	r.Delete("/api/task", api.DeleteTask)
 
-	server.Server(r)
+	server.Start(r)
 }

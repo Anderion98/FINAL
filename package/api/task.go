@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gofer/package/api/nextdate"
 	"gofer/package/db"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -46,12 +45,12 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		writeJson(w, map[string]string{"error": "не указан заголовок задачи"})
 		return
 	}
-	log.Println(t)
+
 	if err := checkDate(&t); err != nil {
 		writeJson(w, map[string]string{"error": err.Error()})
 		return
 	}
-	log.Println(t)
+
 	id, err := db.Add(&t)
 	if err != nil {
 		writeJson(w, map[string]string{"error": "ошибка добавления задачи в базу"})
@@ -213,14 +212,14 @@ func checkDate(t *db.Task) error {
 	}
 
 	if !afterNow(now, timeD) {
-		log.Println(1)
+
 		if t.Repeat == "" {
-			log.Println(2)
+
 			// если правила нет ставим текущую дату в нужном формате
 			t.Date = now.Format(nextdate.TimeFormat)
-			log.Println(4, t.Date, now.Format(nextdate.TimeFormat), time.Now(), now)
+
 		} else {
-			log.Println(3)
+
 			// вычисляем следующую дату
 			next, err := nextdate.NextDate(now, t.Date, t.Repeat)
 			if err != nil {

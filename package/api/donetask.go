@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gofer/package/api/nextdate"
 	"gofer/package/db"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -49,7 +48,6 @@ func DoneTask(w http.ResponseWriter, r *http.Request) {
 	// обновление даты в бл
 	err = db.UpdateDate(nextDate, t.ID)
 	if err != nil {
-		log.Println(66)
 		writeJson(w, map[string]any{"error": err.Error()})
 		return
 	}
