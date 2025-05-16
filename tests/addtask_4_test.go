@@ -3,8 +3,10 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"final/package/api/nextdate"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"strconv"
@@ -144,6 +146,7 @@ func TestAddTask(t *testing.T) {
 			assert.Equal(t, v.comment, task.Comment)
 			assert.Equal(t, v.repeat, task.Repeat)
 			if task.Date < now.Format(`20060102`) {
+				log.Println(task, v, now.Format(`20060102`), now.Format(nextdate.TimeFormat), time.Now())
 				t.Errorf("Дата не может быть меньше сегодняшней %v", v)
 				continue
 			}

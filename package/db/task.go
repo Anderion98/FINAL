@@ -53,13 +53,9 @@ func Tasks(limit int) ([]*Task, error) {
 		}
 		tasks = append(tasks, t)
 	}
-	/*if rows.Err() != nil {
-		return nil, fmt.Errorf("ошибка чтения строк: %w", err)
-	}*/
-
 	return tasks, nil
 }
-func Get(id string) (*Task, error) {
+func Get(id int64) (*Task, error) {
 	var t Task
 	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?`
 	err := db.QueryRow(query, id).Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat)
@@ -85,6 +81,40 @@ func Update(t *Task) error {
 	if count == 0 {
 		return fmt.Errorf("задача не найдена")
 	}
+	return nil
+}
+func Delete(id int64) error {
+	query := `DELETE FROM scheduler WHERE id = ?`
+	res, err := db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("задача не найдена")
+	}
+
+	return nil
+}
+func UpdateDate(next string, id int64) error {
+	query := `UPDATE scheduler SET date = ? WHERE id = ?`
+	res, err := db.Exec(query, next, id)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("задача не найдена")
+	}
+
 	return nil
 }
 func InitDB(dateb *sql.DB) {

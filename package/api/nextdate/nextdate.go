@@ -11,7 +11,9 @@ import (
 const TimeFormat = "20060102"
 
 func afterNow(date, now time.Time) bool {
-	return date.After(now) || now.Equal(date)
+	nowRounding := now.Truncate(24 * time.Hour)
+	dateRounding := date.Truncate(24 * time.Hour)
+	return dateRounding.After(nowRounding) || nowRounding.Equal(dateRounding)
 }
 
 // правило для d
