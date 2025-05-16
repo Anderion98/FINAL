@@ -6,6 +6,7 @@ import (
 	"gofer/package/api/nextdate"
 	"gofer/package/db"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -86,6 +87,82 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJson(w, map[string]interface{}{"tasks": respTasks})
+}
+func GetTask(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeJson(w, map[string]string{"error": "id пустое"})
+		return
+	}
+
+	task, err := db.Get(id)
+	if err != nil {
+		writeJson(w, map[string]string{"error": "задача не найдена"})
+		return
+	}
+
+	//ответ в виде JSON не совпадает с типом поля, меняем тип поля вручную
+	writeJson(w, map[string]string{
+		"id":      strconv.FormatInt(task.ID, 10),
+		"date":    task.Date,
+		"title":   task.Title,
+		"comment": task.Comment,
+		"repeat":  task.Repeat,
+	})
+}
+
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		ID      string `json:"id"`
+		Date    string `json:"date"`
+		Title   string `json:"title"`
+		Comment string `json:"comment"`
+		Repeat  string `json:"repeat"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeJson(w, map[string]string{"error": "error json"})
+		return
+	}
+
+	if input.ID == "" {
+		writeJson(w, map[string]string{"error": "id не указан"})
+		return
+	}
+	// парсинг ID вручную
+	id, err := strconv.ParseInt(input.ID, 10, 64)
+	if err != nil {
+		writeJson(w, map[string]string{"error": "некорректный id "})
+		return
+	}
+
+	if input.Title == "" {
+		writeJson(w, map[string]string{"error": "заголовок пустой"})
+		return
+	}
+
+	// заполняем структуру
+	task := &db.Task{
+		ID:      id,
+		Date:    input.Date,
+		Title:   input.Title,
+		Comment: input.Comment,
+		Repeat:  input.Repeat,
+	}
+
+	// проверка даты
+	if err := checkDate(task); err != nil {
+		writeJson(w, map[string]string{"error": err.Error()})
+		return
+	}
+
+	// обновление задачи в БД
+	if err := db.Update(task); err != nil {
+		writeJson(w, map[string]string{"error": "Задача не найдена"})
+		return
+	}
+
+	writeJson(w, map[string]interface{}{}) // пустой JSON при успехе
 }
 
 // afterNow не стал импортировать из nextdate, создал здесь свое

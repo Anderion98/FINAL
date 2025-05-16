@@ -27,5 +27,8 @@ func main() {
 	r.Get("/api/nextdate", api.NextDayHandler)
 	r.Post("/api/task", api.AddTask)
 	r.Get("/api/tasks", api.TasksHandler)
+	r.Get("/api/task", api.GetTask)
+	r.Put("/api/task", api.UpdateTask)
+
 	server.Server(r)
 }

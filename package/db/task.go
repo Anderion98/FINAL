@@ -59,6 +59,34 @@ func Tasks(limit int) ([]*Task, error) {
 
 	return tasks, nil
 }
+func Get(id string) (*Task, error) {
+	var t Task
+	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?`
+	err := db.QueryRow(query, id).Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("задача не найдена")
+		}
+		return nil, err
+	}
+	return &t, nil
+}
+
+func Update(t *Task) error {
+	query := `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat = ? WHERE id = ?`
+	res, err := db.Exec(query, t.Date, t.Title, t.Comment, t.Repeat, t.ID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("задача не найдена")
+	}
+	return nil
+}
 func InitDB(dateb *sql.DB) {
 	db = dateb
 }
