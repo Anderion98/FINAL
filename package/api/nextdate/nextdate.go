@@ -3,12 +3,16 @@ package nextdate
 import (
 	"errors"
 	"fmt"
-	"gofer/package/config"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const TimeFormat = "20060102"
+
+func afterNow(date, now time.Time) bool {
+	return date.After(now) || now.Equal(date)
+}
 
 func repeatD(now time.Time, date time.Time, repeatParams []string) (string, error) {
 	if len(repeatParams) != 2 {
@@ -22,21 +26,20 @@ func repeatD(now time.Time, date time.Time, repeatParams []string) (string, erro
 		return "", errors.New("превышен максимально допустимый интервал")
 	}
 	date = date.AddDate(0, 0, day)
-	for date.Before(now) {
+	for afterNow(now, date) {
 		date = date.AddDate(0, 0, day)
 	}
-	return date.Format(config.TimeFormat), nil
+	return date.Format(TimeFormat), nil
 }
-
 func repeatY(now time.Time, date time.Time, repeatParams []string) (string, error) {
 	if len(repeatParams) != 1 {
 		return "", errors.New("некорректное правило повторения")
 	}
 	date = date.AddDate(1, 0, 0)
-	for date.Before(now) {
+	for afterNow(now, date) {
 		date = date.AddDate(1, 0, 0)
 	}
-	return date.Format(config.TimeFormat), nil
+	return date.Format(TimeFormat), nil
 }
 
 func repeatWM() (string, error) {
@@ -47,8 +50,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	if repeat == "" {
 		return "", fmt.Errorf("правило повтора не указано")
 	}
-
-	date, err := time.Parse(config.TimeFormat, dstart)
+	date, err := time.Parse(TimeFormat, dstart)
 	if err != nil {
 		return "", fmt.Errorf("недопустимый формат даты")
 	}
@@ -60,26 +62,10 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return repeatY(now, date, component)
 	case "w":
 		return repeatWM()
+
 	case "m":
 		return repeatWM()
 	default:
-		return "", errors.New("формат правила повторения не соблюдён")
+		return "", errors.New("некорректное правило повторения")
 	}
-}
-func NextDayHandler(w http.ResponseWriter, r *http.Request) {
-	now, err := time.Parse(config.TimeFormat, r.FormValue("now"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	date := r.FormValue("date")
-	repeat := r.FormValue("repeat")
-	res, err := NextDate(now, date, repeat)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	fmt.Fprint(w, res)
 }

@@ -1,13 +1,14 @@
 package server
 
 import (
-	"gofer/package/config"
 	"log"
 	"net/http"
 )
 
 func Server(r http.Handler) error {
-	port := config.Port()
+	port := ":7540"
+	log.Println("Запуск сервера")
+	log.Println("Сервер запущен на порту:", port)
 	err := http.ListenAndServe(port, r)
 	if err != nil {
 		log.Fatal("ошибка создания сервера", err)

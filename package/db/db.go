@@ -2,42 +2,38 @@ package db
 
 import (
 	"database/sql"
-	"gofer/package/config"
-	"os"
 
 	_ "modernc.org/sqlite"
 )
 
-type Storage struct {
-	db *sql.DB
-}
+var db *sql.DB
 
-func DataBase() (*Storage, error) {
-	s := &Storage{}
+const schema = `CREATE TABLE IF NOT EXISTS scheduler (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date CHAR(8) NOT NULL DEFAULT "",
+    title VARCHAR(255) NOT NULL,
+    comment TEXT,
+    repeat VARCHAR(128)
+);
 
-	err := s.Init()
+CREATE INDEX IF NOT EXISTS idx_date ON scheduler(date);
+`
+
+func Init(dbfile string) error {
+	var err error
+	db, err = sql.Open("sqlite", dbfile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return s, nil
-}
-func (s *Storage) Init() error {
-	_, err := os.Stat(config.DbName)
-	var install bool
+	_, err = db.Exec(schema)
 	if err != nil {
-		install = true
+		return err
 	}
-	if install {
-		db, err := sql.Open("sqlite", config.DbName)
-		if err != nil {
-			return err
-		}
-		_, err = db.Exec(config.Schema)
-		if err != nil {
-			return err
-		}
-		defer db.Close()
-	}
+
 	return nil
+}
+
+func Close() {
+	db.Close()
 }
