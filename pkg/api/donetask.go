@@ -1,36 +1,36 @@
 package api
 
 import (
-	"fmt"
-	"gofer/package/api/nextdate"
-	"gofer/package/db"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gofer/pkg/db"
+	"gofer/pkg/nextdate"
 )
 
 func DoneTask(w http.ResponseWriter, r *http.Request) {
 	idget := r.URL.Query().Get("id")
 	if idget == "" {
-		writeJson(w, map[string]string{"error": "не указан идентификатор задачи"})
+		writeErr(w, http.StatusBadRequest, "не указан идентификатор задачи")
 		return
 	}
 
 	id, err := strconv.ParseInt(idget, 10, 64)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "некорректный идентификатор задачи"})
+		writeErr(w, http.StatusBadRequest, "неверный идентификатор")
 		return
 	}
 	t, err := db.Get(id)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "задача не найдена"})
+		writeErr(w, http.StatusNotFound, " задача не найдена")
 		return
 	}
 	// удаление задачи
 	if t.Repeat == "" {
 		err = db.Delete(id)
 		if err != nil {
-			writeJson(w, map[string]string{"error": err.Error()})
+			writeErr(w, http.StatusBadRequest, "не удалось удалить задачу")
 			return
 		}
 		writeJson(w, map[string]interface{}{})
@@ -42,13 +42,13 @@ func DoneTask(w http.ResponseWriter, r *http.Request) {
 
 	nextDate, err := nextdate.NextDate(now, t.Date, t.Repeat)
 	if err != nil {
-		writeJson(w, map[string]string{"error": fmt.Sprintf("дата не получена: %v", err)})
+		writeErr(w, http.StatusBadRequest, "не удалось определить дату")
 		return
 	}
 	// обновление даты в бл
 	err = db.UpdateDate(nextDate, t.ID)
 	if err != nil {
-		writeJson(w, map[string]any{"error": err.Error()})
+		writeErr(w, http.StatusInternalServerError, "не удалось обновить дату")
 		return
 	}
 	writeJson(w, map[string]interface{}{})

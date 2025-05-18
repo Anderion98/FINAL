@@ -35,7 +35,7 @@ func Add(task *Task) (int64, error) {
 }
 
 func Tasks(limit int) ([]*Task, error) {
-	query := `SELECT * 
+	query := `SELECT id, date, title, comment, repeat
 		 FROM scheduler
 		 ORDER BY date ASC
 		 LIMIT ?`
@@ -52,6 +52,9 @@ func Tasks(limit int) ([]*Task, error) {
 			return nil, fmt.Errorf("ошибка чтения строки: %w", err)
 		}
 		tasks = append(tasks, t)
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("ошибка чтения строк: %w", err)
 	}
 	return tasks, nil
 }

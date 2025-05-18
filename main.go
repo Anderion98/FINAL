@@ -1,19 +1,16 @@
 package main
 
 import (
-	"final/package/api"
-	"gofer/package/db"
-	"gofer/package/server"
 	"log"
 	"net/http"
+
+	"gofer/pkg/api"
+	"gofer/pkg/db"
+	"gofer/pkg/server"
 
 	"github.com/go-chi/chi"
 )
 
-func DirGetWeb() http.Handler {
-	webDir := "./web"
-	return http.FileServer(http.Dir(webDir))
-}
 func main() {
 	if err := db.Init("scheduler.db"); err != nil {
 		log.Fatal(err)
@@ -22,7 +19,7 @@ func main() {
 
 	r := chi.NewRouter()
 
-	r.Handle("/*", DirGetWeb())
+	r.Handle("/*", http.FileServer(http.Dir("./web")))
 	r.Get("/api/nextdate", api.NextDayHandler)
 	r.Post("/api/task", api.AddTask)
 	r.Get("/api/tasks", api.TasksHandler)

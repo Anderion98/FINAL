@@ -4,11 +4,10 @@ go 1.24.2
 
 replace gofer => ./
 
-require gofer v0.0.0
-
 require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/stretchr/testify v1.10.0
+	gofer v0.0.0-00010101000000-000000000000
 	modernc.org/sqlite v1.37.0
 )
 

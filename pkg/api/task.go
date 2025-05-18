@@ -3,15 +3,22 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"gofer/package/api/nextdate"
-	"gofer/package/db"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gofer/pkg/db"
+	"gofer/pkg/nextdate"
 )
 
 type TasksResp struct {
 	Tasks []db.Task `json:"tasks"`
+}
+
+func writeErr(w http.ResponseWriter, errcode int, text string) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(errcode)
+	json.NewEncoder(w).Encode(map[string]any{"error": text})
 }
 
 // не использовал writeJson ввиду несовпадения типов
@@ -37,23 +44,23 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	var t db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-		writeJson(w, map[string]string{"error": "ошибка десериализации JSON"})
+		writeErr(w, http.StatusBadRequest, "JSON ошибка")
 		return
 	}
 
 	if t.Title == "" {
-		writeJson(w, map[string]string{"error": "не указан заголовок задачи"})
+		writeErr(w, http.StatusBadRequest, "ошибка в поле Title")
 		return
 	}
 
 	if err := checkDate(&t); err != nil {
-		writeJson(w, map[string]string{"error": err.Error()})
+		writeErr(w, http.StatusBadRequest, "не удалось проверить дату")
 		return
 	}
 
 	id, err := db.Add(&t)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "ошибка добавления задачи в базу"})
+		writeErr(w, http.StatusInternalServerError, "не удалось добавить задачу")
 		return
 	}
 	result := map[string]any{
@@ -66,7 +73,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	tasks, err := db.Tasks(50)
 	if err != nil {
-		writeJson(w, map[string]string{"error": err.Error()})
+		writeErr(w, http.StatusInternalServerError, "не удалось получить задачи")
 		return
 	}
 
@@ -92,18 +99,18 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 func GetTask(w http.ResponseWriter, r *http.Request) {
 	idget := r.URL.Query().Get("id")
 	if idget == "" {
-		writeJson(w, map[string]string{"error": "id пустое"})
+		writeErr(w, http.StatusBadRequest, "id пустое")
 		return
 	}
 	id, err := strconv.ParseInt(idget, 10, 64)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "некорректный id"})
+		writeErr(w, http.StatusBadRequest, "некорректный id")
 		return
 	}
 
 	task, err := db.Get(id)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "задача не найдена"})
+		writeErr(w, http.StatusBadRequest, "задача не найдена")
 		return
 	}
 
@@ -127,23 +134,23 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		writeJson(w, map[string]string{"error": "error json"})
+		writeErr(w, http.StatusBadRequest, "JSON ошибка")
 		return
 	}
 
 	if input.ID == "" {
-		writeJson(w, map[string]string{"error": "id не указан"})
+		writeErr(w, http.StatusBadRequest, "id пустое")
 		return
 	}
 	// парсинг ID вручную
 	id, err := strconv.ParseInt(input.ID, 10, 64)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "некорректный id "})
+		writeErr(w, http.StatusBadRequest, "некорректный id ")
 		return
 	}
 
 	if input.Title == "" {
-		writeJson(w, map[string]string{"error": "заголовок пустой"})
+		writeErr(w, http.StatusBadRequest, " ошибка в поле Title")
 		return
 	}
 
@@ -158,13 +165,13 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	// проверка даты
 	if err := checkDate(task); err != nil {
-		writeJson(w, map[string]string{"error": err.Error()})
+		writeErr(w, http.StatusBadRequest, "не удалось проверить дату")
 		return
 	}
 
 	// обновление задачи в БД
 	if err := db.Update(task); err != nil {
-		writeJson(w, map[string]string{"error": "задача не найдена"})
+		writeErr(w, http.StatusNotFound, "не удалось обновить задачу")
 		return
 	}
 
@@ -174,18 +181,18 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	idget := r.URL.Query().Get("id")
 	if idget == "" {
-		writeJson(w, map[string]string{"error": "id пустое"})
+		writeErr(w, http.StatusBadRequest, "id пустое")
 		return
 	}
 	id, err := strconv.ParseInt(idget, 10, 64)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "некорректный id"})
+		writeErr(w, http.StatusBadRequest, "некорректный id")
 		return
 	}
 
 	err = db.Delete(id)
 	if err != nil {
-		writeJson(w, map[string]string{"error": err.Error()})
+		writeErr(w, http.StatusNotFound, "не удалось удалить задачу")
 		return
 	}
 
@@ -234,6 +241,5 @@ func checkDate(t *db.Task) error {
 func writeJson(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, "Ошибка writeJson/task/api", http.StatusInternalServerError)
 	}
 }
